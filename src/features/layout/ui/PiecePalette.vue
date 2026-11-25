@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CircleDot, CornerDownRight, Split, Zap } from '@lucide/vue'
+import { CircleDot, CornerDownRight, Gauge, Split, Zap } from '@lucide/vue'
 import type { PieceKind } from '@/shared/document'
 
 defineProps<{ active: PieceKind | null }>()
@@ -9,6 +9,7 @@ const tools: { kind: PieceKind; label: string; icon: typeof CircleDot }[] = [
   { kind: 'ramp', label: '坡道', icon: CornerDownRight },
   { kind: 'splitter', label: '分岔', icon: Split },
   { kind: 'trigger', label: '触发器', icon: Zap },
+  { kind: 'pendulum', label: '摆锤', icon: Gauge },
 ]
 </script>
 

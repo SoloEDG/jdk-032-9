@@ -5,13 +5,22 @@ import { PiecePalette, BuildCanvas, ObjectInspector } from '@/features/layout'
 import { MechanismPanel } from '@/features/mechanisms'
 import { ScenePanel } from '@/features/scene'
 import { SimulationBar } from '@/features/simulation'
-import { ReplayPanel } from '@/features/replay'
+import { ReplayPanel, EnergyAuditPanel } from '@/features/replay'
+import { scenarioOptions } from '@/shared/defaults'
 import { useWorkspace } from './useWorkspace'
 
 const {
-  document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, place, move, focusEvent,
+  document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review,
+  place, move, focusEvent, selectPiece, loadScenario,
 } = useWorkspace()
 const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : saveState.value === 'saving' ? '保存中' : '尚未保存')
+const activeScenario = computed(() => scenarioOptions.find(item => item.title === document.value.title)?.id ?? 'custom')
+function onScenario(event: Event) {
+  const id = (event.target as HTMLSelectElement).value
+  if (id === 'custom') return
+  loadScenario(id)
+  ;(event.target as HTMLSelectElement).value = activeScenario.value
+}
 </script>
 
 <template>
@@ -22,6 +31,13 @@ const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : sav
         <span class="brand-word"><strong>CHAINLINE</strong><small>DOMINO WORKSHOP</small></span>
       </a>
       <div class="project-menu"><span class="project-mark">DL</span><span class="project-name">{{ document.title }}</span><ChevronDown :size="14" /></div>
+      <label class="scenario-menu">
+        <span>验证场景</span>
+        <select :value="activeScenario" @change="onScenario">
+          <option v-for="option in scenarioOptions" :key="option.id" :value="option.id">{{ option.title }}</option>
+          <option value="custom" disabled>自定义布局</option>
+        </select>
+      </label>
       <div class="topbar-right">
         <span class="save-status"><span :class="['save-dot', saveState]"></span>{{ saveLabel }}</span>
       </div>
@@ -36,6 +52,8 @@ const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : sav
           @update:to-id="mechanisms.toId.value = $event" @add="mechanisms.add" @remove="mechanisms.remove" @toggle="mechanisms.toggle" />
         <div class="rail-divider"></div>
         <ScenePanel :scene="document.scene" @update="scene.update" />
+        <div class="rail-divider"></div>
+        <ObjectInspector :piece="layout.selected.value" @rotate="layout.rotate" @remove="layout.remove" @update="layout.update" />
       </aside>
 
       <section class="center-column">
@@ -56,11 +74,19 @@ const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : sav
       </section>
 
       <aside class="right-rail">
-        <ObjectInspector :piece="layout.selected.value" @rotate="layout.rotate" @remove="layout.remove" @update="layout.update" />
-        <div class="rail-divider"></div>
         <ReplayPanel :run="simulation.run.value" :events="review.events.value" :time="review.time.value"
           :playing="review.playing.value" :current-event="review.currentEvent.value" :stale="simulation.stale.value"
           @toggle="review.toggle" @seek="review.seek" @restart="review.restart" @event="focusEvent" />
+      </aside>
+
+      <aside class="energy-rail">
+        <EnergyAuditPanel v-if="simulation.run.value" :run="simulation.run.value" :time="review.time.value"
+          :current-event-id="review.currentEvent.value?.id ?? null"
+          @event="focusEvent" @piece="selectPiece" />
+        <div v-else class="energy-empty">
+          <div class="section-kicker"><span>06 / ENERGY</span><h2>能量收支</h2></div>
+          <p>运行模拟后，这里会列出每个部件收到的能量、重力补充与各类损耗，并可沿来源链追回摆锤输入。</p>
+        </div>
       </aside>
     </main>
     <footer class="statusbar"><span><AudioWaveform :size="14" /> CHAINLINE FIELD NOTES</span><span>02.4 / MOTION STUDY</span><span>LOCAL PROJECT</span></footer>

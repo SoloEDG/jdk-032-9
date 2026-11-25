@@ -4,7 +4,8 @@ import type { Piece } from '@/shared/document'
 
 defineProps<{ piece: Piece | null }>()
 const emit = defineEmits<{
-  rotate: [string]; remove: [string]; update: [string, Partial<Pick<Piece, 'label' | 'height' | 'fallThreshold' | 'friction'>>]
+  rotate: [string]; remove: [string]
+  update: [string, Partial<Pick<Piece, 'label' | 'height' | 'fallThreshold' | 'friction' | 'energyJ' | 'startAngleDeg'>>]
 }>()
 function value(event: Event) { return (event.target as HTMLInputElement).value }
 function number(event: Event) { return Number(value(event)) }
@@ -23,6 +24,17 @@ function number(event: Event) { return Number(value(event)) }
         <input type="range" min="0.3" max="1.6" step="0.1" :value="piece.fallThreshold"
           @change="emit('update', piece.id, { fallThreshold: number($event) })" />
       </label>
+      <template v-if="piece.kind === 'pendulum'">
+        <label class="field-label">摆锤储能 <span>{{ (piece.energyJ ?? 40).toFixed(1) }} J</span>
+          <input type="range" min="4" max="160" step="1" :value="piece.energyJ ?? 40"
+            @change="emit('update', piece.id, { energyJ: number($event) })" />
+        </label>
+        <label class="field-label">起始摆角 <span>{{ (piece.startAngleDeg ?? 38).toFixed(0) }}°</span>
+          <input type="range" min="10" max="80" step="1" :value="piece.startAngleDeg ?? 38"
+            @change="emit('update', piece.id, { startAngleDeg: number($event) })" />
+        </label>
+        <p class="inspector-note">摆锤储能即本次回放的外部输入，会全额记入能量账。</p>
+      </template>
       <div class="inspector-actions">
         <button @click="emit('rotate', piece.id)"><RotateCw :size="15" /> 旋转 15°</button>
         <button class="danger" @click="emit('remove', piece.id)"><Trash2 :size="15" /> 删除</button>

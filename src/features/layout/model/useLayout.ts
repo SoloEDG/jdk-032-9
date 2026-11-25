@@ -2,9 +2,10 @@ import { computed, ref, type Ref } from 'vue'
 import type { DominoDocument, Piece, PieceKind } from '@/shared/document'
 import { roundedPosition } from '../lib/geometry'
 import { stableId } from '@/shared/time'
+import { DEFAULT_PENDULUM_ENERGY_J } from '@/features/simulation/lib/energy'
 
 const names: Record<PieceKind, string> = {
-  domino: '骨牌', ramp: '坡道', splitter: '分岔', trigger: '触发器',
+  domino: '骨牌', ramp: '坡道', splitter: '分岔', trigger: '触发器', pendulum: '摆锤',
 }
 
 export function useLayout(document: Ref<DominoDocument>, changed: () => void) {
@@ -23,6 +24,7 @@ export function useLayout(document: Ref<DominoDocument>, changed: () => void) {
       label: names[kind], width: kind === 'ramp' ? 1.7 : kind === 'splitter' ? 0.72 : 0.42,
       height: kind === 'ramp' ? 0.48 : kind === 'trigger' ? 0.8 : 1.6,
       fallThreshold: 0.8, friction: 0.55,
+      ...(kind === 'pendulum' ? { energyJ: DEFAULT_PENDULUM_ENERGY_J, startAngleDeg: 38 } : {}),
     }
     document.value = { ...document.value, pieces: [...document.value.pieces, piece] }
     selectedId.value = id

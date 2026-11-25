@@ -1,3 +1,5 @@
 export { useReview } from './model/useReview'
 export { default as ReplayPanel } from './ui/ReplayPanel.vue'
+export { default as EnergyAuditPanel } from './ui/EnergyAuditPanel.vue'
 export { sortedEvents, previousEvent } from './lib/eventOrder'
+export * from './lib/energyAudit'

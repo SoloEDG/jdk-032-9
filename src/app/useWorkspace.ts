@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import type { DominoDocument } from '@/shared/document'
-import { createDefaultDocument } from '@/shared/defaults'
+import { createDefaultDocument, createEnergyVerificationDocument } from '@/shared/defaults'
 import { useLayout } from '@/features/layout'
 import { useMechanisms } from '@/features/mechanisms'
 import { useScene, clampToScene } from '@/features/scene'
@@ -73,6 +73,21 @@ export function useWorkspace() {
     layout.select(event.pieceId)
     review.focusEvent(id)
   }
+  function selectPiece(pieceId: string) {
+    focusPieceId.value = pieceId
+    layout.select(pieceId)
+    const first = simulation.run.value?.energy.ledger.find(entry => entry.pieceId === pieceId && entry.stage !== 'check')
+    if (first) review.seek(first.time)
+  }
+  function loadScenario(id: string) {
+    const next = id === 'energy-verification' ? createEnergyVerificationDocument() : createDefaultDocument()
+    document.value = { ...next, updatedAt: Date.now() }
+    layout.select(null)
+    layout.chooseTool(null)
+    simulation.clear()
+    focusPieceId.value = null
+    saveState.value = 'unsaved'
+  }
   function onKeydown(event: KeyboardEvent) {
     const target = event.target
     if (target instanceof HTMLElement && target.matches('input, select, textarea, button')) return
@@ -93,5 +108,8 @@ export function useWorkspace() {
     window.clearTimeout(saveTimer)
   })
 
-  return { document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, place, move, focusEvent }
+  return {
+    document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review,
+    place, move, focusEvent, selectPiece, loadScenario,
+  }
 }

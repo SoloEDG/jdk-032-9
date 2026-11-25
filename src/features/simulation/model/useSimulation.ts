@@ -1,5 +1,5 @@
 import { computed, ref, shallowRef, type Ref } from 'vue'
-import type { DominoDocument, SimulationRun } from '@/shared/document'
+import type { DominoDocument, EnergyReport, SimulationRun } from '@/shared/document'
 import { propagate } from '../lib/propagate'
 
 export function useSimulation(document: Ref<DominoDocument>) {
@@ -16,6 +16,11 @@ export function useSimulation(document: Ref<DominoDocument>) {
     try {
       const snapshot = structuredClone(document.value)
       const result = propagate(snapshot)
+      const energy: EnergyReport = {
+        ledger: result.ledger,
+        totals: result.totals,
+        pieces: result.summaries,
+      }
       run.value = {
         id: crypto.randomUUID(),
         documentId: snapshot.id,
@@ -27,6 +32,8 @@ export function useSimulation(document: Ref<DominoDocument>) {
         interruptedPieceId: result.interruptedPieceId,
         interruptionReason: result.interruptionReason,
         duration: result.duration,
+        pieceLabels: result.pieceLabels,
+        energy,
       }
       if (result.status === 'empty') issue.value = '场景里没有可运行的触发点。'
     } catch {

@@ -52,6 +52,7 @@ function pxY(y: number) { return view.margin + y / props.document.scene.height *
 function pieceColor(piece: Piece) {
   if (piece.id === failed.value) return '#e88b69'
   if (fallen.value.has(piece.id)) return '#89c5a5'
+  if (piece.kind === 'pendulum') return '#c9b8e8'
   if (piece.kind === 'ramp') return '#8ca6a0'
   if (piece.kind === 'splitter') return '#e6bd68'
   if (piece.kind === 'trigger') return '#df8d70'
@@ -60,6 +61,10 @@ function pieceColor(piece: Piece) {
 function eventTime(pieceId: string) {
   const event = props.run?.events.find(item => item.pieceId === pieceId)
   return event ? event.time.toFixed(2) : ''
+}
+function storedNow(pieceId: string) {
+  const summary = props.run?.energy.pieces.find(item => item.pieceId === pieceId)
+  return summary && summary.storedJ > 0.001 ? summary.storedJ : 0
 }
 </script>
 
@@ -101,6 +106,12 @@ function eventTime(pieceId: string) {
         @pointerdown="down($event, piece)" @keydown.enter.stop="emit('select', piece.id)" @keydown.space.stop.prevent="emit('select', piece.id)">
         <ellipse v-if="piece.kind === 'domino'" cx="0" cy="7" rx="15" ry="8" class="piece-ground-shadow" />
         <rect v-if="piece.kind === 'domino'" x="-9" y="-20" width="18" height="39" rx="4" :fill="pieceColor(piece)" class="domino-body" filter="url(#piece-shadow)" />
+        <g v-else-if="piece.kind === 'pendulum'" :fill="pieceColor(piece)" class="pendulum-body" filter="url(#piece-shadow)">
+          <line x1="0" y1="-2" x2="13" y2="-25" class="pendulum-arm" />
+          <circle cx="0" cy="-3" r="3" class="pendulum-pivot" />
+          <circle cx="13" cy="-25" r="8.5" />
+          <text x="13" y="-22" text-anchor="middle" class="pendulum-glyph">J</text>
+        </g>
         <path v-else-if="piece.kind === 'ramp'" d="M-24 10 L22 10 L22 -10 Z" :fill="pieceColor(piece)" class="ramp-body" filter="url(#piece-shadow)" />
         <path v-else-if="piece.kind === 'splitter'" d="M0-13 L13 0 L0 13 L-13 0 Z" :fill="pieceColor(piece)" class="splitter-body" filter="url(#piece-shadow)" />
         <circle v-else r="11" :fill="pieceColor(piece)" class="trigger-body" filter="url(#piece-shadow)" />
@@ -109,6 +120,7 @@ function eventTime(pieceId: string) {
         <circle v-if="piece.id === failed" cy="-34" r="7" class="failure-marker" />
         <text y="32" text-anchor="middle" class="piece-label">{{ piece.label }}</text>
         <text v-if="eventTime(piece.id)" y="44" text-anchor="middle" class="piece-time">{{ eventTime(piece.id) }}s</text>
+        <text v-if="storedNow(piece.id)" y="55" text-anchor="middle" class="piece-energy">储存 {{ storedNow(piece.id).toFixed(1) }}J</text>
         <rect v-if="selectedId === piece.id || focusPieceId === piece.id" x="-18" y="-28" width="36" height="55" rx="8" class="selection-ring" />
       </g>
 
